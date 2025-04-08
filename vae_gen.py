@@ -1,11 +1,10 @@
 import torch
-from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 
 from modules.dataset.pixelart_dataset import FilteredDatasetOneHot, PixelartDataset
 from modules.vae.vae import PixelVAE
-from vae_train import transform, IMAGE_SIZE, LATENT_DIM
+from vae_train import IMAGE_SIZE, LATENT_DIM, transform
 
 MODEL_FILE = './results/vae/weights/vae_model_50.pth'
 
