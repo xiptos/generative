@@ -1,7 +1,7 @@
 # based on https://github.com/AntixK/PyTorch-VAE/blob/master/models/vanilla_vae.py
 import torch
 from torch import nn
-from torchvision import transforms
+
 
 class PixelVAE(nn.Module):
     def __init__(self, image_size = 16, latend_dim = 128):
