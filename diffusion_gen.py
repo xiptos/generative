@@ -2,10 +2,11 @@
 import numpy as np
 import torch
 
-from modules.diffusion import ContextUnet
+from modules.diffusion.context_unet import ContextUnet
+import matplotlib.pyplot as plt
 
-
-def denoise_add_noise(b_t, x, t, pred_noise, z=None):
+# helper function; removes the predicted noise (but adds some noise back in to avoid collapse)
+def denoise_add_noise(x, t, pred_noise, z=None):
     if z is None:
         z = torch.randn_like(x)
     noise = b_t.sqrt()[t] * z
@@ -37,6 +38,15 @@ def sample_ddpm_context(n_sample, context, save_rate=20):
     intermediate = np.stack(intermediate)
     return samples, intermediate
 
+def show_images(imgs, nrow=2):
+    _, axs = plt.subplots(nrow, imgs.shape[0] // nrow, figsize=(4,2 ))
+    axs = axs.flatten()
+    for img, ax in zip(imgs, axs):
+        img = (img.permute(1, 2, 0).clip(-1, 1).detach().cpu().numpy() + 1) / 2
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.imshow(img)
+    plt.show()
 
 if __name__ == '__main__':
     # network hyperparameters
@@ -56,7 +66,7 @@ if __name__ == '__main__':
     n_feat = 64  # 64 hidden dimension feature
     n_cfeat = 5  # context vector is of size 5
     height = 16  # 16x16 image
-    save_dir = "./results/diffusion/weights/"
+    save_dir = "./models/context_model_31.pth"
 
     # construct DDPM noise schedule
     b_t = (beta2 - beta1) * torch.linspace(0, 1, timesteps + 1, device=device) + beta1
@@ -66,3 +76,23 @@ if __name__ == '__main__':
 
     # construct model
     nn_model = ContextUnet(in_channels=3, n_feat=n_feat, n_cfeat=n_cfeat, height=height).to(device)
+
+    # load in pretrain model weights and set to eval mode
+    nn_model.load_state_dict(torch.load(f"{save_dir}", map_location=device))
+    nn_model.eval()
+    print("Loaded in Context Model")
+
+    # user defined context
+    ctx = torch.tensor([
+        # hero, non-hero, food, spell, side-facing
+        [1,0,0,0,0],
+        [1,0,0,0,0],
+        [0,0,0,0,1],
+        [0,0,0,0,1],
+        [0,1,0,0,0],
+        [0,1,0,0,0],
+        [0,0,1,0,0],
+        [0,0,1,0,0],
+    ]).float().to(device)
+    samples, _ = sample_ddpm_context(ctx.shape[0], ctx)
+    show_images(samples)

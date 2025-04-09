@@ -28,10 +28,12 @@ def train(nn_model: nn.Module, dataloader: DataLoader, ab_t):
             optim.zero_grad()
             x = x.to(device)
             c = c.to(x)
+            print(c)
 
             # randomly mask out c
             context_mask = torch.bernoulli(torch.zeros(c.shape[0]) + 0.9).to(device)
             c = c * context_mask.unsqueeze(-1)
+            print(c)
 
             # perturb data
             noise = torch.randn_like(x)
